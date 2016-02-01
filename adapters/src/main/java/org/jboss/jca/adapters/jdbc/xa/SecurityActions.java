@@ -54,6 +54,48 @@ class SecurityActions
    }
 
    /**
+    * Get the context classloader.
+    * @return The classloader
+    */
+   static ClassLoader getThreadContextClassLoader()
+   {
+      if (System.getSecurityManager() == null)
+         return Thread.currentThread().getContextClassLoader();
+
+      return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>()
+      {
+         public ClassLoader run()
+         {
+            return Thread.currentThread().getContextClassLoader();
+         }
+      });
+   }
+
+   /**
+    * Set the context classloader.
+    * @param cl classloader
+    */
+   static void setThreadContextClassLoader(final ClassLoader cl)
+   {
+      if (System.getSecurityManager() == null)
+      {
+         Thread.currentThread().setContextClassLoader(cl);
+      }
+      else
+      {
+         AccessController.doPrivileged(new PrivilegedAction<Object>()
+         {
+            public Object run()
+            {
+               Thread.currentThread().setContextClassLoader(cl);
+
+               return null;
+            }
+         });
+      }
+   }
+
+   /**
     * Create a Subject
     * @param readOnly Is the Subject read-only
     * @param subject The original subject

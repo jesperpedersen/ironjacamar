@@ -484,14 +484,18 @@ public class XAManagedConnectionFactory extends BaseWrapperManagedConnectionFact
       XAConnection xaConnection = null;
       Properties props = getConnectionProperties(null, subject, cri);
 
+      ClassLoader oldTccl = SecurityActions.getThreadContextClassLoader();
       try
       {
+         XADataSource xaDs = getXADataSource();
+         SecurityActions.setThreadContextClassLoader(SecurityActions.getClassLoader(xaDs.getClass()));
+
          final String user = props.getProperty("user");
          final String password = props.getProperty("password");
 
          xaConnection = (user != null)
-            ? getXADataSource().getXAConnection(user, password)
-            : getXADataSource().getXAConnection();
+            ? xaDs.getXAConnection(user, password)
+            : xaDs.getXAConnection();
 
          return newXAManagedConnection(props, xaConnection);
       }
@@ -507,6 +511,10 @@ public class XAManagedConnectionFactory extends BaseWrapperManagedConnectionFact
             // Ignore
          }
          throw new ResourceException(bundle.unableToCreateConnection(), e);
+      }
+      finally
+      {
+         SecurityActions.setThreadContextClassLoader(oldTccl);
       }
    }
 
